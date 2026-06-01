@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Product Details - Flipkart Clone</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <header class="site-header"></header>
+
+  <main>
+    <div class="container">
+      <div class="breadcrumb" id="breadcrumb"></div>
+      <div id="productDetail"></div>
+      <section class="products-section" style="margin-top: 32px;">
+        <h2 class="section-title">Similar Products</h2>
+        <div class="products-grid" id="similarProducts"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="data/products-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const id = App.getQueryParam("id");
+      const product = Products.getById(id);
+      const container = document.getElementById("productDetail");
+
+      if (!product) {
+        container.innerHTML = `<div class="empty-state"><h2>Product not found</h2><p><a href="products.html">Browse all products</a></p></div>`;
+        return;
+      }
+
+      document.title = `${product.name} - Flipkart Clone`;
+      const discount = Products.getDiscount(product);
+      const inWishlist = Wishlist.isInWishlist(product.id);
+
+      document.getElementById("breadcrumb").innerHTML = `
+        <a href="index.html">Home</a> /
+        <a href="products.html?category=${product.category}">${product.category}</a> /
+        ${product.name}
+      `;
+
+      container.innerHTML = `
+        <div class="product-detail">
+          <div class="detail-image">
+            <img src="${product.image}" alt="${product.name}" />
+          </div>
+          <div class="detail-info">
+            <h1>${product.name}</h1>
+            <p class="detail-brand">${product.brand}</p>
+            <div class="detail-rating">
+              <span class="rating-badge">${product.rating} ★</span>
+              <span>${product.reviews.toLocaleString()} Ratings & Reviews</span>
+            </div>
+            <div class="detail-price product-price">
+              <span class="price">${Products.formatPrice(product.price)}</span>
+              ${discount ? `<span class="mrp">${Products.formatPrice(product.mrp)}</span>` : ""}
+              ${discount ? `<span class="discount">${discount}% off</span>` : ""}
+            </div>
+            <p style="color: var(--text-muted); margin-bottom: 24px;">${product.description}</p>
+            <div class="detail-actions">
+              <button class="btn btn-primary" id="addToCartBtn">ADD TO CART</button>
+              <button class="btn btn-secondary" id="buyNowBtn">BUY NOW</button>
+              <button class="btn btn-outline wishlist-btn-detail ${inWishlist ? "active" : ""}" id="wishlistBtn">
+                ${inWishlist ? "♥ Wishlisted" : "♡ Add to Wishlist"}
+              </button>
+            </div>
+            <div class="detail-highlights">
+              <h3>Highlights</h3>
+              <ul>${product.highlights.map((h) => `<li>${h}</li>`).join("")}</ul>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("addToCartBtn").addEventListener("click", () => {
+        Cart.add(product.id);
+        App.updateBadges();
+      });
+
+      document.getElementById("buyNowBtn").addEventListener("click", () => {
+        Cart.add(product.id);
+        window.location.href = "checkout.html";
+      });
+
+      document.getElementById("wishlistBtn").addEventListener("click", () => {
+        const active = Wishlist.toggle(product.id);
+        const btn = document.getElementById("wishlistBtn");
+        btn.textContent = active ? "♥ Wishlisted" : "♡ Add to Wishlist";
+        btn.classList.toggle("active", active);
+        App.updateBadges();
+      });
+
+      const similar = Products.getByCategory(product.category)
+        .filter((p) => p.id !== product.id)
+        .slice(0, 4);
+      Products.renderGrid(document.getElementById("similarProducts"), similar);
+    });
+  </script>
+</body>
+</html>

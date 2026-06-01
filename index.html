@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flipkart Clone - Online Shopping</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <header class="site-header"></header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-content">
+        <div class="hero-text">
+          <h1>Big Billion Days Sale</h1>
+          <p>Up to 70% off on electronics, fashion & more</p>
+          <div class="hero-deals">
+            <span class="deal-tag">Free Delivery</span>
+            <span class="deal-tag">Bank Offers</span>
+            <span class="deal-tag">No Cost EMI</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container">
+      <section class="categories">
+        <h2 class="section-title">Shop by Category</h2>
+        <div class="category-grid" id="categoryGrid"></div>
+      </section>
+
+      <section class="products-section">
+        <h2 class="section-title">Best of Electronics</h2>
+        <div class="products-grid" id="featuredProducts"></div>
+      </section>
+
+      <section class="products-section">
+        <h2 class="section-title">Top Deals</h2>
+        <div class="products-grid" id="topDeals"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="data/products-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const grid = document.getElementById("categoryGrid");
+      grid.innerHTML = CATEGORIES.map(
+        (c) => `
+          <a href="products.html?category=${c.id}" class="category-card">
+            <div class="category-icon">${c.icon}</div>
+            <span>${c.name}</span>
+          </a>
+        `
+      ).join("");
+
+      const featured = Products.sort(Products.getAll(), "rating").slice(0, 4);
+      Products.renderGrid(document.getElementById("featuredProducts"), featured);
+
+      const deals = Products.sort(Products.getAll(), "discount").slice(0, 4);
+      Products.renderGrid(document.getElementById("topDeals"), deals);
+    });
+  </script>
+</body>
+</html>

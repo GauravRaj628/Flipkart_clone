@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout - Flipkart Clone</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <header class="site-header"></header>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a> / <a href="cart.html">Cart</a> / Checkout</div>
+        <h1>Checkout</h1>
+      </div>
+    </div>
+
+    <div class="container page-layout" id="checkoutContent"></div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="data/products-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const container = document.getElementById("checkoutContent");
+      const items = Cart.getDetailedItems();
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <h2>Nothing to checkout</h2>
+            <p>Your cart is empty</p>
+            <a href="products.html" class="btn btn-primary">Shop Now</a>
+          </div>
+        `;
+        return;
+      }
+
+      const total = Cart.getTotal();
+
+      container.innerHTML = `
+        <form class="checkout-form" id="checkoutForm">
+          <h2>Delivery Address</h2>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" required />
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" pattern="[0-9]{10}" placeholder="10-digit mobile" required />
+          </div>
+          <div class="form-group">
+            <label for="address">Address</label>
+            <textarea id="address" rows="3" required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" id="city" required />
+            </div>
+            <div class="form-group">
+              <label for="pincode">Pincode</label>
+              <input type="text" id="pincode" pattern="[0-9]{6}" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="state">State</label>
+            <select id="state" required>
+              <option value="">Select State</option>
+              <option value="DL">Delhi</option>
+              <option value="MH">Maharashtra</option>
+              <option value="KA">Karnataka</option>
+              <option value="TN">Tamil Nadu</option>
+              <option value="UP">Uttar Pradesh</option>
+              <option value="GJ">Gujarat</option>
+              <option value="WB">West Bengal</option>
+              <option value="RJ">Rajasthan</option>
+            </select>
+          </div>
+
+          <h2 style="margin-top: 32px;">Payment Method</h2>
+          <div class="payment-options">
+            <label class="payment-option">
+              <input type="radio" name="payment" value="cod" checked />
+              <span>Cash on Delivery</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="upi" />
+              <span>UPI (GPay / PhonePe / Paytm)</span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="payment" value="card" />
+              <span>Credit / Debit Card</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Place Order — ${Products.formatPrice(total)}</button>
+        </form>
+
+        <div class="price-summary">
+          <h3>ORDER SUMMARY</h3>
+          ${items
+            .map(
+              (item) => `
+              <div class="summary-row" style="font-size: 0.85rem;">
+                <span>${item.name.slice(0, 30)}${item.name.length > 30 ? "…" : ""} × ${item.quantity}</span>
+                <span>${Products.formatPrice(item.price * item.quantity)}</span>
+              </div>
+            `
+            )
+            .join("")}
+          <div class="summary-row total">
+            <span>Total</span>
+            <span>${Products.formatPrice(total)}</span>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("checkoutForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const order = {
+          id: "ORD" + Date.now(),
+          date: new Date().toISOString(),
+          items: items.map((i) => ({ productId: i.id, name: i.name, quantity: i.quantity, price: i.price })),
+          total,
+          address: {
+            name: `${document.getElementById("firstName").value} ${document.getElementById("lastName").value}`,
+            phone: document.getElementById("phone").value,
+            address: document.getElementById("address").value,
+            city: document.getElementById("city").value,
+            pincode: document.getElementById("pincode").value,
+            state: document.getElementById("state").value
+          },
+          payment: document.querySelector('input[name="payment"]:checked').value
+        };
+
+        Storage.saveOrder(order);
+        Cart.clear();
+        App.updateBadges();
+
+        container.innerHTML = `
+          <div class="order-success" style="grid-column: 1 / -1;">
+            <h1>✓ Order Placed Successfully!</h1>
+            <p>Order ID: <strong>${order.id}</strong></p>
+            <p>Thank you for shopping. Your order will be delivered soon.</p>
+            <a href="index.html" class="btn btn-primary">Continue Shopping</a>
+          </div>
+        `;
+      });
+    });
+  </script>
+</body>
+</html>

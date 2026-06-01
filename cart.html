@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Cart - Flipkart Clone</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <header class="site-header"></header>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a> / Cart</div>
+        <h1>My Cart (<span id="cartCount">0</span>)</h1>
+      </div>
+    </div>
+
+    <div class="container page-layout" id="cartContent"></div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="data/products-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function renderCart() {
+      const items = Cart.getDetailedItems();
+      const container = document.getElementById("cartContent");
+      document.getElementById("cartCount").textContent = Cart.getCount();
+
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <h2>Your cart is empty</h2>
+            <p>Add items to get started</p>
+            <a href="products.html" class="btn btn-primary">Continue Shopping</a>
+          </div>
+        `;
+        return;
+      }
+
+      let totalMrp = 0;
+      let totalPrice = 0;
+
+      const itemsHtml = items
+        .map((item) => {
+          totalMrp += item.mrp * item.quantity;
+          totalPrice += item.price * item.quantity;
+          const discount = Products.getDiscount(item);
+          return `
+            <div class="cart-item" data-id="${item.id}">
+              <a href="product-details.html?id=${item.id}" class="item-image">
+                <img src="${item.image}" alt="${item.name}" />
+              </a>
+              <div class="item-details">
+                <h3><a href="product-details.html?id=${item.id}">${item.name}</a></h3>
+                <div class="product-price">
+                  <span class="price">${Products.formatPrice(item.price)}</span>
+                  ${discount ? `<span class="mrp">${Products.formatPrice(item.mrp)}</span>` : ""}
+                </div>
+                <div class="quantity-control">
+                  <button class="qty-btn" data-action="decrease" data-id="${item.id}">−</button>
+                  <span class="qty-value">${item.quantity}</span>
+                  <button class="qty-btn" data-action="increase" data-id="${item.id}">+</button>
+                </div>
+              </div>
+              <div class="item-actions">
+                <button class="remove-btn" data-id="${item.id}">REMOVE</button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+
+      const savings = totalMrp - totalPrice;
+
+      container.innerHTML = `
+        <div class="cart-items">${itemsHtml}</div>
+        <div class="price-summary">
+          <h3>PRICE DETAILS</h3>
+          <div class="summary-row">
+            <span>Price (${items.length} items)</span>
+            <span>${Products.formatPrice(totalMrp)}</span>
+          </div>
+          ${savings > 0 ? `<div class="summary-row discount"><span>Discount</span><span>−${Products.formatPrice(savings)}</span></div>` : ""}
+          <div class="summary-row">
+            <span>Delivery Charges</span>
+            <span style="color: var(--success);">FREE</span>
+          </div>
+          ${savings > 0 ? `<div class="savings-banner">You will save ${Products.formatPrice(savings)} on this order</div>` : ""}
+          <div class="summary-row total">
+            <span>Total Amount</span>
+            <span>${Products.formatPrice(totalPrice)}</span>
+          </div>
+          <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top: 16px;">PLACE ORDER</a>
+        </div>
+      `;
+
+      container.querySelectorAll(".qty-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.dataset.id);
+          const item = Cart.getItems().find((i) => i.productId === id);
+          const qty = item.quantity + (btn.dataset.action === "increase" ? 1 : -1);
+          Cart.updateQuantity(id, qty);
+          renderCart();
+          App.updateBadges();
+        });
+      });
+
+      container.querySelectorAll(".remove-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          Cart.remove(Number(btn.dataset.id));
+          renderCart();
+          App.updateBadges();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderCart);
+    document.addEventListener("cartUpdated", renderCart);
+  </script>
+</body>
+</html>

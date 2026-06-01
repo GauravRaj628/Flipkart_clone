@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Wishlist - Flipkart Clone</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <header class="site-header"></header>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a> / Wishlist</div>
+        <h1>My Wishlist (<span id="wishlistCount">0</span>)</h1>
+      </div>
+    </div>
+
+    <div class="container" id="wishlistContent"></div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="data/products-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function renderWishlist() {
+      const products = Wishlist.getProducts();
+      const container = document.getElementById("wishlistContent");
+      document.getElementById("wishlistCount").textContent = products.length;
+
+      if (products.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h2>Your wishlist is empty</h2>
+            <p>Save items you like for later</p>
+            <a href="products.html" class="btn btn-primary">Explore Products</a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="wishlist-items">
+          ${products
+            .map((item) => {
+              const discount = Products.getDiscount(item);
+              return `
+                <div class="wishlist-item" data-id="${item.id}">
+                  <a href="product-details.html?id=${item.id}" class="item-image">
+                    <img src="${item.image}" alt="${item.name}" />
+                  </a>
+                  <div class="item-details">
+                    <h3><a href="product-details.html?id=${item.id}">${item.name}</a></h3>
+                    <div class="product-rating">
+                      <span class="rating-badge">${item.rating} ★</span>
+                    </div>
+                    <div class="product-price">
+                      <span class="price">${Products.formatPrice(item.price)}</span>
+                      ${discount ? `<span class="mrp">${Products.formatPrice(item.mrp)}</span>` : ""}
+                    </div>
+                  </div>
+                  <div class="item-actions">
+                    <button class="btn btn-add-cart" data-id="${item.id}">Add to Cart</button>
+                    <button class="remove-btn" data-id="${item.id}">REMOVE</button>
+                  </div>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+      `;
+
+      container.querySelectorAll(".btn-add-cart").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          Cart.add(Number(btn.dataset.id));
+          App.updateBadges();
+        });
+      });
+
+      container.querySelectorAll(".remove-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          Wishlist.remove(Number(btn.dataset.id));
+          renderWishlist();
+          App.updateBadges();
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", renderWishlist);
+    document.addEventListener("wishlistUpdated", renderWishlist);
+  </script>
+</body>
+</html>

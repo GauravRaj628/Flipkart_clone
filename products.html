@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Products - Flipkart Clone</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <header class="site-header"></header>
+
+  <main>
+    <div class="page-header">
+      <div class="container">
+        <div class="breadcrumb"><a href="index.html">Home</a> / Products</div>
+        <h1 id="pageTitle">All Products</h1>
+      </div>
+    </div>
+
+    <div class="container products-layout">
+      <aside class="filters-sidebar">
+        <h3>Filters</h3>
+        <div class="filter-group">
+          <strong>Category</strong>
+          <label><input type="radio" name="category" value="all" checked /> All</label>
+          <label><input type="radio" name="category" value="mobiles" /> Mobiles</label>
+          <label><input type="radio" name="category" value="electronics" /> Electronics</label>
+          <label><input type="radio" name="category" value="fashion" /> Fashion</label>
+          <label><input type="radio" name="category" value="laptops" /> Laptops</label>
+          <label><input type="radio" name="category" value="appliances" /> Appliances</label>
+        </div>
+        <div class="filter-group">
+          <strong>Price</strong>
+          <label><input type="radio" name="price" value="all" checked /> All</label>
+          <label><input type="radio" name="price" value="0-5000" /> Under ₹5,000</label>
+          <label><input type="radio" name="price" value="5000-25000" /> ₹5,000 - ₹25,000</label>
+          <label><input type="radio" name="price" value="25000-50000" /> ₹25,000 - ₹50,000</label>
+          <label><input type="radio" name="price" value="50000+" /> Above ₹50,000</label>
+        </div>
+      </aside>
+
+      <div>
+        <div class="sort-bar">
+          <span class="results-count" id="resultsCount"></span>
+          <select id="sortSelect">
+            <option value="relevance">Sort by: Relevance</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Customer Rating</option>
+            <option value="discount">Discount</option>
+          </select>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="data/products-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/products.js"></script>
+  <script src="js/cart.js"></script>
+  <script src="js/wishlist.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const categoryParam = params.get("category");
+      const searchQuery = params.get("q");
+
+      if (categoryParam) {
+        const radio = document.querySelector(`input[name="category"][value="${categoryParam}"]`);
+        if (radio) radio.checked = true;
+      }
+
+      if (searchQuery) {
+        document.getElementById("pageTitle").textContent = `Results for "${searchQuery}"`;
+      } else if (categoryParam) {
+        const cat = CATEGORIES.find((c) => c.id === categoryParam);
+        if (cat) document.getElementById("pageTitle").textContent = cat.name;
+      }
+
+      function filterByPrice(products, range) {
+        if (range === "all") return products;
+        if (range === "0-5000") return products.filter((p) => p.price < 5000);
+        if (range === "5000-25000") return products.filter((p) => p.price >= 5000 && p.price < 25000);
+        if (range === "25000-50000") return products.filter((p) => p.price >= 25000 && p.price < 50000);
+        if (range === "50000+") return products.filter((p) => p.price >= 50000);
+        return products;
+      }
+
+      function applyFilters() {
+        const category = document.querySelector('input[name="category"]:checked').value;
+        const price = document.querySelector('input[name="price"]:checked').value;
+        const sort = document.getElementById("sortSelect").value;
+
+        let list = searchQuery ? Products.search(searchQuery) : Products.getByCategory(category);
+        list = filterByPrice(list, price);
+        if (sort !== "relevance") list = Products.sort(list, sort);
+
+        document.getElementById("resultsCount").textContent = `${list.length} product${list.length !== 1 ? "s" : ""} found`;
+        Products.renderGrid(document.getElementById("productsGrid"), list);
+      }
+
+      document.querySelectorAll('input[name="category"], input[name="price"]').forEach((el) => {
+        el.addEventListener("change", applyFilters);
+      });
+      document.getElementById("sortSelect").addEventListener("change", applyFilters);
+
+      applyFilters();
+    });
+  </script>
+</body>
+</html>
